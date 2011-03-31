@@ -1,0 +1,183 @@
+<mx:VBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark"  
+		xmlns:mx="library://ns.adobe.com/flex/mx" 
+		label="Go Annotation/Slim" 
+		 width="100%"
+		  paddingLeft="10" 
+		  paddingRight="10" 
+		  paddingTop="10" 
+		  paddingBottom="10">	
+	<mx:states>
+		<mx:State name="Annotation"/>
+		<mx:State name="GoSlim" />
+	</mx:states>
+	<fx:Declarations>
+		<s:RadioButtonGroup id="proteinSeparatorRadioButtonGroup"/>
+		<s:RadioButtonGroup id="slimSetSeparatorRadioButtonGroup"/>
+		<s:RadioButtonGroup id="versionRadioButtonGroup"/>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.era7.bioinfo.gui.go.events.GoAnnotationSlimEvent;
+			import com.era7.bioinfo.xml.Protein;
+			import com.era7.bioinfo.xml.go.GoTerm;
+			import com.era7.bioinfo.xml.go.SlimSet;
+			
+			public static const GO_SLIM_STATE:String = "GoSlim";
+			public static const GO_ANNOTATION_STATE:String = "Annotation";
+			
+			
+			
+			protected function goAnnotationRadioButton_clickHandler(event:MouseEvent):void
+			{
+				if(currentState != GO_ANNOTATION_STATE){
+					currentState = GO_ANNOTATION_STATE;
+				}
+			}
+			
+			protected function goSlimRadioButton_clickHandler(event:MouseEvent):void
+			{
+				if(currentState != GO_SLIM_STATE){
+					currentState = GO_SLIM_STATE;
+				}
+			}
+			
+			protected function getFileButton_clickHandler(event:MouseEvent):void
+			{
+				dispatchEvent(new GoAnnotationSlimEvent(GoAnnotationSlimEvent.GET_RESULTS,true));
+			}	
+			
+			
+			public function getProteinsFromTextArea():XML{
+				var proteinsXML:XML = new XML(<proteins/>);
+				
+				var separator:String = "";
+				if(enterProteinRadioButton.selected){
+					separator = "\n";					
+				}else if(tabProteinRadioButton.selected){
+					separator = "\t";
+				}else if(whiteSpaceProteinRadioButton.selected){
+					separator = " ";
+				}else if(characterProteinRadioButton.selected){
+					separator = characterProteinTextInput.text;
+				}
+				
+				var proteinIds:Array = proteinIdsTextArea.text.split(separator);
+				
+				for each(var id:String in proteinIds){
+					if(id != "" && id != "\s"){
+						var tempProtein:Protein = new Protein();
+						tempProtein.id = id;
+						proteinsXML.appendChild(tempProtein.getContent());
+					}					
+				}
+				
+				return proteinsXML;
+			}
+			
+			public function getSlimSetFromTextArea():SlimSet{
+				var slimSet:SlimSet = new SlimSet();
+				
+				var separator:String = "";
+				if(enterSlimSetRadioButton.selected){
+					separator = "\n";					
+				}else if(tabSlimSetRadioButton.selected){
+					separator = "\t";
+				}else if(whiteSpaceSlimSetRadioButton.selected){
+					separator = " ";
+				}else if(characterSlimSetRadioButton.selected){
+					separator = characterSlimSetTextInput.text;
+				}
+				
+				var goIds:Array = slimSetIdsTextArea.text.split(separator);
+				
+				for each(var id:String in goIds){
+					if(id != "" && id != "\s"){
+						var tempGo:GoTerm = new GoTerm();
+						tempGo.id = id;
+						slimSet.getContent().appendChild(tempGo.getContent());
+					}					
+				}
+				
+				return slimSet;
+			}
+			
+			
+		]]>
+	</fx:Script>
+	<s:HGroup width="100%">
+		<s:RadioButton label="GoAnnotation" groupName="radioButtonGroup" selected="true" 
+					   id="goAnnotationRadioButton" click="goAnnotationRadioButton_clickHandler(event)" 
+					   left="20" top="10" />
+		<s:RadioButton label="GoSlim" groupName="radioButtonGroup" id="goSlimRadioButton" selected="false" 
+					   click="goSlimRadioButton_clickHandler(event)" top="10" left="136"   />
+	</s:HGroup>	
+	<mx:VBox width="100%" 
+			 paddingLeft="10" 
+			 paddingTop="10" 
+			 paddingRight="10" 
+			 paddingBottom="10" 
+			 cornerRadius="10" 
+			 backgroundColor="#E4E4E4">
+		<s:HGroup width="100%">
+			<s:Label text="Enter the protein ids in the text-area and specify the separator" 
+					 height="15" 
+					 />
+			<mx:Spacer width="100%"/>
+			<s:Label text="(Uniprot accessions e.g. Q01593)" 
+					 height="15" 
+					 fontStyle="italic"/>
+		</s:HGroup>				
+		<s:TextArea y="72" left="20" right="20" id="proteinIdsTextArea" 
+					editable="true"  width="100%" height="130"/>
+		<s:HGroup y="194" left="20" right="20" verticalAlign="middle" >
+			<s:Label text="Separator:"/>
+			<s:RadioButton label=" Enter ('\n')" groupName="proteinSeparatorRadioButtonGroup" 
+						   id="enterProteinRadioButton" selected="true"/>
+			<s:RadioButton label=" Tab ('\t')" groupName="proteinSeparatorRadioButtonGroup" 
+						   id="tabProteinRadioButton" selected="false" />
+			<s:RadioButton label=" Whitespace (' ')" groupName="proteinSeparatorRadioButtonGroup" 
+						   id="whiteSpaceProteinRadioButton" selected="false" />
+			<s:RadioButton label="Character:" groupName="proteinSeparatorRadioButtonGroup" 
+						   id="characterProteinRadioButton" selected="false" />
+			<s:TextInput enabled="true" id="characterProteinTextInput" width="18" maxChars="1"/>
+		</s:HGroup>	
+	</mx:VBox>	
+	<mx:VBox includeIn="GoSlim" 
+			 width="100%"
+			 paddingLeft="10" 
+			 paddingTop="10" 
+			 paddingRight="10" 
+			 paddingBottom="10" 
+			 cornerRadius="10" 
+			 backgroundColor="#E4E4E4">
+		<s:HGroup width="100%">
+			<s:Label height="15" 
+					 text="Enter the Go term ids of the slim-set in the text area and specify the separator"/>
+			<mx:Spacer width="100%"/>
+			<s:Label height="15" 
+					 text="(e.g. GO:0019787)"
+					 fontStyle="italic"/>
+		</s:HGroup>	
+		<s:TextArea y="287" left="20" right="20" id="slimSetIdsTextArea" 
+					editable="true" width="100%"
+					height="130"/>
+		<s:HGroup y="409" left="20" right="20" verticalAlign="middle">
+			<s:Label text="Separator:"/>
+			<s:RadioButton label=" Enter ('\n')" groupName="slimSetSeparatorRadioButtonGroup" 
+						   id="enterSlimSetRadioButton" selected="true"/>
+			<s:RadioButton label=" Tab ('\t')" groupName="slimSetSeparatorRadioButtonGroup" 
+						   id="tabSlimSetRadioButton"/>
+			<s:RadioButton label="Whitespace (' ')" groupName="slimSetSeparatorRadioButtonGroup" 
+						   id="whiteSpaceSlimSetRadioButton"/>
+			<s:RadioButton label="Character:" groupName="slimSetSeparatorRadioButtonGroup" 
+						   id="characterSlimSetRadioButton"/>
+			<s:TextInput enabled="true" id="characterSlimSetTextInput" width="18" maxChars="1"/>
+		</s:HGroup>
+	</mx:VBox>
+	<s:HGroup width="100%" verticalAlign="middle" horizontalAlign="right" gap="5">				  
+		<s:Button id="getFileButton" click="getFileButton_clickHandler(event)"  
+				  label="Get results"/>
+	</s:HGroup>			
+</mx:VBox>

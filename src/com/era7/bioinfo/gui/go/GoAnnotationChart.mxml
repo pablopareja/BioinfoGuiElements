@@ -1,0 +1,991 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:ns1="com.era7.util.gui.*" 
+		 xmlns:search="com.era7.util.gui.search.*"
+		 xmlns:gui="com.era7.bioinfo.go.gui.*" enabled.LoadingState="false"
+		 creationComplete="onCreationComplete()"
+		 >
+	<mx:states>
+		<s:State name="State1"/>
+		<mx:State name="LoadingState">
+		</mx:State>
+	</mx:states>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>	
+	<fx:Script>
+		<![CDATA[
+			import com.era7.bioinfo.gui.IconsManager;
+			import com.era7.bioinfo.gui.go.util.GoRetriever;
+			import com.era7.bioinfo.xml.go.GoTerm;
+			import com.era7.util.debug.Debugger;
+			import com.era7.util.events.SearchBarEvent;
+			
+			import mx.charts.events.ChartItemEvent;
+			import mx.charts.series.BarSeries;
+			import mx.collections.ArrayCollection;
+			import mx.collections.Sort;
+			import mx.collections.SortField;
+			import mx.controls.Alert;
+			
+			
+			public static const LOADING_STATE:String = "LoadingState";
+			
+			/* private var selectedFileMuestra1:File  = null;
+			private var selectedFileMuestra2:File = null; */
+			
+			//--------------------SOURCES MUESTRAS--------------------------
+			[Bindable]
+			private var sourceGraficoProcess:ArrayCollection = new ArrayCollection();
+			[Bindable]
+			private var sourceGraficoComponent:ArrayCollection = new ArrayCollection();
+			[Bindable]
+			private var sourceGraficoFunction:ArrayCollection = new ArrayCollection();
+			
+			
+			[Bindable]
+			private var comboBoxDataProvider:XML = <items>
+													<item name="biological_process" />
+													<item name="molecular_function" />
+													<item name="cellular_component" />
+												  </items>;											  
+			
+			
+			private var frecuenciaMinimaMuestreo:int = 50;		
+			
+			//MUESTRA 1
+			
+			[Bindable]
+			private var goTermsMuestra1:XML = new XML(<go_terms/>);
+			[Bindable]
+			private var numeroGenesMuestra1:Number = 0;
+			[Bindable]
+			private var numeroGenesAnotadosMuestra1:Number = 0;
+			
+			private var xmlMuestra1:XML = null;
+			private var proteinsMuestra1:XMLList = null;
+			
+			private var goTermsFunctionMuestra1:XMLList = null;
+			private var goTermFunctionIdsMuestra1:Array = null;		
+			
+			private var goTermsProcessMuestra1:XMLList = null;
+			private var goTermProcessIdsMuestra1:Array = null;			
+			
+			private var goTermsComponentMuestra1:XMLList = null;
+			private var goTermComponentIdsMuestra1:Array = null;
+			
+			//MUESTRA 2
+			
+			[Bindable]
+			private var goTermsMuestra2:XML = new XML(<go_terms/>);
+			[Bindable]
+			private var numeroGenesMuestra2:Number = 0;
+			[Bindable]
+			private var numeroGenesAnotadosMuestra2:Number = 0;
+			
+			private var xmlMuestra2:XML = null;
+			private var proteinsMuestra2:XMLList = null;
+			
+			private var goTermsFunctionMuestra2:XMLList = null;
+			private var goTermFunctionIdsMuestra2:Array = null;
+			
+			private var goTermsProcessMuestra2:XMLList = null;
+			private var goTermProcessIdsMuestra2:Array = null;
+			
+			private var goTermsComponentMuestra2:XMLList = null;
+			private var goTermComponentIdsMuestra2:Array = null;
+			
+			
+			private var goRetriever:GoRetriever = null;
+			
+			
+			/*
+			*	ON CREATION COMPLETE
+			*/
+			protected function onCreationComplete():void
+			{
+				/* goRetriever = new GoRetriever();
+				goRetriever.addEventListener(GoTermEvent.GO_TERM_LOADED,onGoTermLoaded); */				
+				
+				//-----MUESTRA 1-----
+				/* selectedFileMuestra1 = new File();
+				selectedFileMuestra1.addEventListener(Event.SELECT,onSelectMuestra1); */
+				
+				//-----MUESTRA 2-----
+				/* selectedFileMuestra2 = new File();
+				selectedFileMuestra2.addEventListener(Event.SELECT,onSelectMuestra2); */
+				
+				searchBar.addEventListener(SearchBarEvent.GO_TO_ELEMENT,onGoToElement);
+				searchBar.addEventListener(SearchBarEvent.SEARCH,onSearch);
+				
+				/* pieChart.addEventListener(ChartItemEvent.ITEM_CLICK,onChartItemClick); */
+				barChart.addEventListener(ChartItemEvent.ITEM_CLICK,onChartItemClick);
+				
+				/* Create the SortField object for the "data" field in the ArrayCollection object, 
+				and make sure we do a numeric sort. */
+				var dataSortField:SortField = new SortField();
+				dataSortField.name = "frecuencia1";
+				dataSortField.numeric = true;
+				
+				/* Create the Sort object and add the SortField object created earlier to the 
+				array of fields to sort on. */
+				var numericDataSort:Sort = new Sort();
+				numericDataSort.fields = [dataSortField];
+				
+				/* Set the ArrayCollection object's sort property to our custom sort, and refresh the ArrayCollection. */
+				//-----MUESTRA 1-----
+				sourceGraficoComponent.sort = numericDataSort;
+				sourceGraficoFunction.sort = numericDataSort;
+				sourceGraficoProcess.sort = numericDataSort;
+			}
+			
+			protected function onSearch(event:SearchBarEvent):void{
+				
+				var text:String = event.getSearchText();
+				
+				var array:Array = new Array();				
+				var goTermsLength:int = goTermsMuestra1.elements().length();
+				var list:XMLList = goTermsMuestra1.go_term;
+				var goIdPlusName:String = "";
+				
+				for(var i:int=0;i < goTermsLength ;i++){										
+					goIdPlusName = list[i].id[0].toString()+" "+list[i].name[0].toString();
+					goIdPlusName = goIdPlusName.toLowerCase();
+					if( goIdPlusName.indexOf(text.toLowerCase())!= -1){
+						array.push(list[i].id[0].toString());
+					}					
+				}
+				
+				if(array.length == 0){
+					searchBar.setResults(null);
+				}else{
+					searchBar.setResults(array);
+				}								
+				
+			}
+			protected function onGoToElement(event:SearchBarEvent):void{
+				
+				var idToFind:String = event.getSearchText();
+				selectGoTermOnCharts(idToFind);
+				goToGoTerm(idToFind);
+				
+			}
+			
+			protected function onBrowseButtonMuestra1Click():void
+			{
+				//selectedFileMuestra1.browse([new FileFilter("archivos xml: ","*.xml")]);				
+			}
+			protected function onBrowseButtonMuestra2Click():void
+			{
+				//selectedFileMuestra2.browse([new FileFilter("archivos xml: ","*.xml")]);				
+			}
+			
+			protected function onSelectMuestra1(event:Event):void{
+				
+				/* selectedFile1TextInput.text = selectedFileMuestra1.nativePath;
+				
+				var fileStream:FileStream = new FileStream();
+				fileStream.open(selectedFileMuestra1, FileMode.READ);
+				
+				var fileContents:String = fileStream.readUTFBytes(fileStream.bytesAvailable);
+				fileStream.close();
+				
+				xmlMuestra1 = new XML(fileContents);
+				
+				goTermsProcessMuestra1 = xmlMuestra1..biological_process.go_term;
+				goTermProcessIdsMuestra1 = new Array();
+				
+				for each(var term:XML in goTermsProcessMuestra1){
+					var tempID:String = XML(term.id).toString();
+					if(goTermProcessIdsMuestra1.indexOf(tempID) == -1){
+						goTermProcessIdsMuestra1.push(tempID);
+					}
+				}
+				
+				goTermsFunctionMuestra1 = xmlMuestra1..molecular_function.go_term;
+				goTermFunctionIdsMuestra1 = new Array();
+				
+				for each(var termF:XML in goTermsFunctionMuestra1){
+					var tempIDF:String = XML(termF.id).toString();
+					if(goTermFunctionIdsMuestra1.indexOf(tempIDF) == -1){
+						goTermFunctionIdsMuestra1.push(tempIDF);
+					}
+				}
+				
+				goTermsComponentMuestra1 = xmlMuestra1..cellular_component.go_term;
+				goTermComponentIdsMuestra1 = new Array();
+				
+				for each(var termC:XML in goTermsComponentMuestra1){
+					var tempIDC:String = XML(termC.id).toString();
+					if(goTermComponentIdsMuestra1.indexOf(tempIDC) == -1){
+						goTermComponentIdsMuestra1.push(tempIDC);
+					}
+				}				
+				
+				numeroGenesMuestra1 = XMLList(xmlMuestra1.protein_annotations[0].protein).length();
+				numeroGenesAnotadosMuestra1 = XMLList(xmlMuestra1.protein_annotations[0].protein.go_terms).length();
+				
+				proteinsMuestra1 = xmlMuestra1..protein;	
+				
+				generarGraficosButton_clickHandler(null); */
+				
+			}	
+			
+			protected function onSelectMuestra2(event:Event):void{
+				
+				/* selectedFile2TextInput.text = selectedFileMuestra2.nativePath;
+				
+				var fileStream:FileStream = new FileStream();
+				fileStream.open(selectedFileMuestra2, FileMode.READ);
+				
+				var fileContents:String = fileStream.readUTFBytes(fileStream.bytesAvailable);
+				fileStream.close();
+				
+				xmlMuestra2 = new XML(fileContents);
+				
+				goTermsProcessMuestra2 = xmlMuestra2..biological_process.go_term;
+				goTermProcessIdsMuestra2 = new Array();
+				
+				for each(var term:XML in goTermsProcessMuestra2){
+					var tempID:String = XML(term.id).toString();
+					if(goTermProcessIdsMuestra2.indexOf(tempID) == -1){
+						goTermProcessIdsMuestra2.push(tempID);
+					}
+				}
+				
+				goTermsFunctionMuestra2 = xmlMuestra2..molecular_function.go_term;
+				goTermFunctionIdsMuestra2 = new Array();
+				
+				for each(var termF:XML in goTermsFunctionMuestra2){
+					var tempIDF:String = XML(termF.id).toString();
+					if(goTermFunctionIdsMuestra2.indexOf(tempIDF) == -1){
+						goTermFunctionIdsMuestra2.push(tempIDF);
+					}
+				}
+				
+				goTermsComponentMuestra2 = xmlMuestra2..cellular_component.go_term;
+				goTermComponentIdsMuestra2 = new Array();
+				
+				for each(var termC:XML in goTermsComponentMuestra2){
+					var tempIDC:String = XML(termC.id).toString();
+					if(goTermComponentIdsMuestra2.indexOf(tempIDC) == -1){
+						goTermComponentIdsMuestra2.push(tempIDC);
+					}
+				}				
+				
+				numeroGenesMuestra2 = XMLList(xmlMuestra2.protein_annotations[0].protein).length();
+				numeroGenesAnotadosMuestra2 = XMLList(xmlMuestra2.protein_annotations[0].protein.go_terms).length();
+				
+				proteinsMuestra2 = xmlMuestra2..protein;
+				
+				generarGraficosButton_clickHandler(null); */
+				
+			}
+			
+			
+			private function recalculateSourceGraficas():void{
+				
+				recalculateSourceComponentChart();
+				recalculateSourceFunctionChart();
+				recalculateSourceProcessChart();			           
+				
+				actualizarDataGridTerminosGo();
+				
+				/* pieSeries.selectedIndex = -1; */
+				barSeriesMuestra1.selectedIndex = -1;
+				
+			}
+			
+			private function recalculateSourceProcessChart():void{
+				
+				sourceGraficoProcess.removeAll();
+				
+				var arrayMuestra1:Array = new Array();
+				var arrayMuestra2:Array = new Array();
+				
+				//------------------------------------------------------------
+				//--------------------------MUESTRA 1-----------------------
+				
+				for each(var currentGoIdP:String in goTermProcessIdsMuestra1){
+					var frecuenciaP:Number = 0;
+					for each(var proteinP:XML in proteinsMuestra1){
+						var ocurrencesP:XMLList = proteinP.go_terms.biological_process.go_term.(id.toString() == currentGoIdP);
+						
+						if(ocurrencesP.length() > 0){
+							frecuenciaP++;
+						}
+					}
+					frecuenciaP = frecuenciaP*100.0/numeroGenesMuestra1;
+					if(frecuenciaP >= frecuenciaMinimaMuestreo){
+						arrayMuestra1.push({id:currentGoIdP,frecuencia:frecuenciaP});
+					}
+				}				
+				
+				
+				//------------------------------------------------------------
+				//--------------------------MUESTRA 2-----------------------
+				
+				for each(var currentGoIdP2:String in goTermProcessIdsMuestra2){
+					var frecuenciaP2:Number = 0;
+					for each(var proteinP2:XML in proteinsMuestra2){
+						var ocurrencesP2:XMLList = proteinP2.go_terms.biological_process.go_term.(id.toString() == currentGoIdP2);
+						if(ocurrencesP2.length() > 0){
+							frecuenciaP2++;
+						}
+					}
+					frecuenciaP2 = frecuenciaP2*100.0/numeroGenesMuestra2;
+					if(frecuenciaP2 >= frecuenciaMinimaMuestreo){
+						arrayMuestra2.push({id:currentGoIdP2,frecuencia:frecuenciaP2});
+					}
+				}
+				
+				//-----Ahora toca ver que terminos de go hay en comun entre las dos 
+				// muestras para poner sus frecuencias juntas, las que no, iran sueltas con 
+				// valor 0 automatico para el otro valor.
+				for(var i:int=0;i<arrayMuestra1.length;i++){
+					
+					var idGo:String = arrayMuestra1[i].id;
+					var frec1:Number =  arrayMuestra1[i].frecuencia;
+					
+					var foundInMuestra2:Boolean = false;
+					var frecMuestra2:Number = 0;
+					
+					for(var j:int=0;j<arrayMuestra2.length;j++){
+						if(idGo == arrayMuestra2[j].id){
+							foundInMuestra2 = true;
+							frecMuestra2 = arrayMuestra2[j].frecuencia;
+						}
+					}					
+					if(foundInMuestra2){
+						/* Debugger.appendText("Muestra1 comun muestra 2 id: " + idGo + " frec1: " + frec1 + " frec2: " + frecMuestra2,Debugger.ERROR_MODE); */
+						sourceGraficoProcess.addItem({id:idGo,frecuencia1:frec1,frecuencia2:frecMuestra2});
+						/* Debugger.appendText(""+sourceGraficoProcess.length,Debugger.ERROR_MODE); */
+					}else{
+						//----------------------------------------------------------------------------
+						//Como no esta en comun la tengo que calcular para la muestra 2 
+						//porque es interesante que no se pierda ese valor :|
+						var frecBlabla:Number = 0;
+						for each(var proteinnnn:XML in proteinsMuestra2){
+							var ocurrencessss:XMLList = proteinnnn.go_terms.biological_process.go_term.(id.toString() == idGo);
+							if(ocurrencessss.length() > 0){
+								frecBlabla++;
+							}
+						}
+						frecBlabla = frecBlabla*100.0/numeroGenesMuestra2;
+						/* Debugger.appendText("Muestra1 si muestra 2 no: " + idGo + " frec1: " + frec1 + " frec2: " + frecBlabla,Debugger.ERROR_MODE); */
+						sourceGraficoProcess.addItem({id:idGo,frecuencia1:frec1,frecuencia2:frecBlabla});
+						/* Debugger.appendText(""+sourceGraficoProcess.length,Debugger.ERROR_MODE); */
+						//---------------------------------------------------------------------------------------
+					}					
+				}				
+				for(var i2:int=0;i2<arrayMuestra2.length;i2++){
+					
+					var idGo2:String = arrayMuestra2[i2].id;
+					var frec2:Number =  arrayMuestra2[i2].frecuencia;
+					
+					var foundInMuestra1:Boolean = false;
+					
+					for(var j1:int=0;j1<arrayMuestra1.length;j1++){
+						if(idGo2 == arrayMuestra1[j1].id){
+							foundInMuestra1 = true;
+						}
+					}					
+					if(!foundInMuestra1){
+						//----------------------------------------------------------------------------
+						//Como no esta en comun la tengo que calcular para la muestra 1 
+						//porque es interesante que no se pierda ese valor :|
+						var frecBleble:Number = 0;
+						for each(var proteinaaaa:XML in proteinsMuestra1){
+							var ocurrenciasss:XMLList = proteinaaaa.go_terms.biological_process.go_term.(id.toString() == idGo2);
+							if(ocurrenciasss.length() > 0){
+								frecBleble++;
+							}
+						}
+						frecBleble = frecBleble*100.0/numeroGenesMuestra1;
+						/* Debugger.appendText("Muestra1 no muestra 2 si: " + idGo2 + " frec1: " + frecBleble + " frec2: " + frecBlabla,Debugger.ERROR_MODE); */
+						sourceGraficoProcess.addItem({id:idGo2,frecuencia1:frecBleble,frecuencia2:frec2});
+						/* Debugger.appendText(""+sourceGraficoProcess.length,Debugger.ERROR_MODE); */
+						//---------------------------------------------------------------------------------------
+						
+					}					
+				}
+				
+				//Ordenacion de los sources para que salga el gráfico de barras de mayor a menor
+				sourceGraficoProcess.refresh();      
+				
+				
+			}
+			
+			private function recalculateSourceComponentChart():void{
+				
+				sourceGraficoComponent.removeAll();
+				
+				var arrayMuestra1:Array = new Array();
+				var arrayMuestra2:Array = new Array();
+				
+				//------------------------------------------------------------
+				//--------------------------MUESTRA 1-----------------------
+				
+				for each(var currentGoIdC:String in goTermComponentIdsMuestra1){
+					var frecuenciaC:Number = 0;
+					for each(var proteinC:XML in proteinsMuestra1){
+						var ocurrencesC:XMLList = proteinC.go_terms.cellular_component.go_term.(id.toString() == currentGoIdC);
+						if(ocurrencesC.length() > 0){
+							frecuenciaC++;
+						}
+					}
+					frecuenciaC = frecuenciaC*100.0/numeroGenesMuestra1;
+					if(frecuenciaC >= frecuenciaMinimaMuestreo){						
+						arrayMuestra1.push({id:currentGoIdC,frecuencia:frecuenciaC});
+					}
+				}
+				
+				//------------------------------------------------------------
+				//--------------------------MUESTRA 2-----------------------
+				
+				for each(var currentGoIdC2:String in goTermComponentIdsMuestra2){
+					var frecuenciaC2:Number = 0;
+					for each(var proteinC2:XML in proteinsMuestra2){
+						var ocurrencesC2:XMLList = proteinC2.go_terms.cellular_component.go_term.(id.toString() == currentGoIdC2);
+						if(ocurrencesC2.length() > 0){
+							frecuenciaC2++;
+						}
+					}
+					frecuenciaC2 = frecuenciaC2 * 100.0 / numeroGenesMuestra2;
+					if(frecuenciaC2 >= frecuenciaMinimaMuestreo){
+						arrayMuestra2.push({id:currentGoIdC2,frecuencia:frecuenciaC2});						
+					}
+				}			
+				
+				//-----Ahora toca ver que terminos de go hay en comun entre las dos 
+				// muestras para poner sus frecuencias juntas, las que no, iran sueltas con 
+				// valor 0 automatico para el otro valor.
+				for(var i:int=0;i<arrayMuestra1.length;i++){
+					
+					var idGo:String = arrayMuestra1[i].id;
+					var frec1:Number =  arrayMuestra1[i].frecuencia;
+					
+					var foundInMuestra2:Boolean = false;
+					var frecMuestra2:Number = 0;
+					
+					for(var j:int=0;j<arrayMuestra2.length;j++){
+						if(idGo == arrayMuestra2[j].id){
+							foundInMuestra2 = true;
+							frecMuestra2 = arrayMuestra2[j].frecuencia;
+						}
+					}					
+					if(foundInMuestra2){
+						sourceGraficoComponent.addItem({id:idGo,frecuencia1:frec1,frecuencia2:frecMuestra2});
+					}else{
+						//----------------------------------------------------------------------------
+						//Como no esta en comun la tengo que calcular para la muestra 2 
+						//porque es interesante que no se pierda ese valor :|
+						var frecBlabla:Number = 0;
+						for each(var proteinnnn:XML in proteinsMuestra2){
+							var ocurrencessss:XMLList = proteinnnn.go_terms.cellular_component.go_term.(id.toString() == idGo);
+							if(ocurrencessss.length() > 0){
+								frecBlabla++;
+							}
+						}
+						frecBlabla = frecBlabla*100.0/numeroGenesMuestra2;
+						sourceGraficoComponent.addItem({id:idGo,frecuencia1:frec1,frecuencia2:frecBlabla});
+						//---------------------------------------------------------------------------------------
+					}					
+				}				
+				for(var i2:int=0;i2<arrayMuestra2.length;i2++){
+					
+					var idGo2:String = arrayMuestra2[i2].id;
+					var frec2:Number =  arrayMuestra2[i2].frecuencia;
+					
+					var foundInMuestra1:Boolean = false;
+					
+					for(var j1:int=0;j1<arrayMuestra1.length;j1++){
+						if(idGo2 == arrayMuestra1[j1].id){
+							foundInMuestra1 = true;
+						}
+					}					
+					if(!foundInMuestra1){
+						//----------------------------------------------------------------------------
+						//Como no esta en comun la tengo que calcular para la muestra 1 
+						//porque es interesante que no se pierda ese valor :|
+						var frecBleble:Number = 0;
+						for each(var proteinaaaa:XML in proteinsMuestra1){
+							var ocurrenciasss:XMLList = proteinaaaa.go_terms.cellular_component.go_term.(id.toString() == idGo2);
+							if(ocurrenciasss.length() > 0){
+								frecBleble++;
+							}
+						}
+						frecBleble = frecBleble*100.0/numeroGenesMuestra1;
+						sourceGraficoComponent.addItem({id:idGo2,frecuencia1:frecBleble,frecuencia2:frec2});
+						//---------------------------------------------------------------------------------------
+					}					
+				}
+				
+				//Ordenacion de los sources para que salga el gráfico de barras de mayor a menor
+				sourceGraficoComponent.refresh();
+			}
+			
+			private function recalculateSourceFunctionChart():void{
+				
+				sourceGraficoFunction.removeAll();
+				
+				var arrayMuestra1:Array = new Array();
+				var arrayMuestra2:Array = new Array();
+				
+				//------------------------------------------------------------
+				//--------------------------MUESTRA 1-----------------------
+				
+				for each(var currentGoIdF:String in goTermFunctionIdsMuestra1){
+					var frecuenciaF:Number = 0;
+					for each(var proteinF:XML in proteinsMuestra1){
+						var ocurrencesF:XMLList = proteinF.go_terms.molecular_function.go_term.(id.toString() == currentGoIdF);
+						if(ocurrencesF.length() > 0){
+							frecuenciaF++;
+						}
+					}
+					frecuenciaF = frecuenciaF * 100.0 / numeroGenesMuestra1;
+					if(frecuenciaF >= frecuenciaMinimaMuestreo){
+						arrayMuestra1.push({id:currentGoIdF,frecuencia:frecuenciaF});
+					}
+				}
+				
+				//------------------------------------------------------------
+				//--------------------------MUESTRA 2-----------------------
+				
+				for each(var currentGoIdF2:String in goTermFunctionIdsMuestra2){
+					var frecuenciaF2:Number = 0;
+					for each(var proteinF2:XML in proteinsMuestra2){
+						var ocurrencesF2:XMLList = proteinF2.go_terms.molecular_function.go_term.(id.toString() == currentGoIdF2);
+						if(ocurrencesF2.length() > 0){
+							frecuenciaF2++;
+						}
+					}
+					frecuenciaF2 = frecuenciaF2 * 100.0 / numeroGenesMuestra2;
+					if(frecuenciaF2 >= frecuenciaMinimaMuestreo){
+						arrayMuestra2.push({id:currentGoIdF2,frecuencia:frecuenciaF2});
+					}
+				}			
+				
+				//-----Ahora toca ver que terminos de go hay en comun entre las dos 
+				// muestras para poner sus frecuencias juntas, las que no, iran sueltas con 
+				// valor 0 automatico para el otro valor.
+				for(var i:int=0;i<arrayMuestra1.length;i++){
+					
+					var idGo:String = arrayMuestra1[i].id;
+					var frec1:Number =  arrayMuestra1[i].frecuencia;
+					
+					var foundInMuestra2:Boolean = false;
+					var frecMuestra2:Number = 0;
+					
+					for(var j:int=0;j<arrayMuestra2.length;j++){
+						if(idGo == arrayMuestra2[j].id){
+							foundInMuestra2 = true;
+							frecMuestra2 = arrayMuestra2[j].frecuencia;
+						}
+					}					
+					if(foundInMuestra2){
+						sourceGraficoFunction.addItem({id:idGo,frecuencia1:frec1,frecuencia2:frecMuestra2});
+					}else{
+						//----------------------------------------------------------------------------
+						//Como no esta en comun la tengo que calcular para la muestra 2 
+						//porque es interesante que no se pierda ese valor :|
+						var frecBlabla:Number = 0;
+						for each(var proteinnnn:XML in proteinsMuestra2){
+							var ocurrencessss:XMLList = proteinnnn.go_terms.molecular_function.go_term.(id.toString() == idGo);
+							if(ocurrencessss.length() > 0){
+								frecBlabla++;
+							}
+						}
+						frecBlabla = frecBlabla*100.0/numeroGenesMuestra2;
+						sourceGraficoFunction.addItem({id:idGo,frecuencia1:frec1,frecuencia2:frecBlabla});
+						//---------------------------------------------------------------------------------------
+					}					
+				}				
+				for(var i2:int=0;i2<arrayMuestra2.length;i2++){
+					
+					var idGo2:String = arrayMuestra2[i2].id;
+					var frec2:Number =  arrayMuestra2[i2].frecuencia;
+					
+					var foundInMuestra1:Boolean = false;
+					
+					for(var j1:int=0;j1<arrayMuestra1.length;j1++){
+						if(idGo2 == arrayMuestra1[j1].id){
+							foundInMuestra1 = true;
+						}
+					}					
+					if(!foundInMuestra1){
+						//----------------------------------------------------------------------------
+						//Como no esta en comun la tengo que calcular para la muestra 1 
+						//porque es interesante que no se pierda ese valor :|
+						var frecBleble:Number = 0;
+						for each(var proteinaaaa:XML in proteinsMuestra1){
+							var ocurrenciasss:XMLList = proteinaaaa.go_terms.molecular_function.go_term.(id.toString() == idGo2);
+							if(ocurrenciasss.length() > 0){
+								frecBleble++;
+							}
+						}
+						frecBleble = frecBleble*100.0/numeroGenesMuestra1;
+						sourceGraficoFunction.addItem({id:idGo2,frecuencia1:frecBleble,frecuencia2:frec2});
+						//---------------------------------------------------------------------------------------
+					}					
+				}
+				
+				//Ordenacion de los sources para que salga el gráfico de barras de mayor a menor
+				sourceGraficoFunction.refresh();
+				
+			}
+			
+			
+			private function onComboBoxChange():void{
+				if(comboBox.selectedItem.@name == "biological_process")
+				{
+					/* pieChart.dataProvider = sourceGraficoProcess;	 */
+					barChart.dataProvider = sourceGraficoProcess;	
+					categoryAxis.dataProvider = sourceGraficoProcess;
+					
+				}else if(comboBox.selectedItem.@name == "cellular_component")
+				{
+					/* pieChart.dataProvider = sourceGraficoComponent;	 */
+					barChart.dataProvider = sourceGraficoComponent;
+					categoryAxis.dataProvider = sourceGraficoComponent;
+					
+				}else if(comboBox.selectedItem.@name == "molecular_function")
+				{
+					/* pieChart.dataProvider = sourceGraficoFunction;	 */
+					barChart.dataProvider = sourceGraficoFunction;
+					categoryAxis.dataProvider = sourceGraficoFunction;
+					
+				}
+				
+				//-----------Quitar seleccion de los graficos-----
+				/* pieSeries.selectedIndex = -1; */
+				barSeriesMuestra1.selectedIndex = -1;
+				//-------------------------------------------------
+				
+				actualizarDataGridTerminosGo();
+			}
+			
+			private function actualizarDataGridTerminosGo():void{
+				
+				goTermsMuestra1 = new XML(<go_terms/>);
+				
+				var listGos:XMLList = xmlMuestra1..go_term;
+				
+				if(comboBox.selectedItem.@name == "biological_process")
+				{
+					for each(var obj:Object in sourceGraficoProcess){
+						if(obj.id != "Otros"){
+							var tempGo:GoTerm = new GoTerm();
+							tempGo.id = obj.id;
+							for each(var go1:XML in listGos){
+								if(go1.id.toString() == obj.id){
+									/* Debugger.appendText("go1: " + go1.toXMLString(),Debugger.ERROR_MODE); */
+									tempGo.name = go1.name.toString();
+									tempGo.evidence = go1.evidence.toString();
+									break;
+								}
+							}							
+							goTermsMuestra1.appendChild(tempGo.getContent());
+						}
+						
+					}
+					
+				}else if(comboBox.selectedItem.@name == "cellular_component")
+				{
+					for each(var obj1:Object in sourceGraficoComponent){
+						if(obj1.id != "Otros"){
+							var tempGo1:GoTerm = new GoTerm();
+							tempGo1.id = obj1.id;
+							for each(var go2:XML in listGos){
+								if(go2.id.toString() == obj1.id){
+									tempGo1.name = go2.name.toString();
+									tempGo2.evidence = go2.evidence.toString();
+									break;
+								}
+							}
+							goTermsMuestra1.appendChild(tempGo1.getContent());
+						}
+					}
+					
+				}else if(comboBox.selectedItem.@name == "molecular_function")
+				{
+					for each(var obj2:Object in sourceGraficoFunction){
+						if(obj2.id != "Otros"){
+							var tempGo2:GoTerm = new GoTerm();
+							tempGo2.id = (obj2.id);
+							for each(var go3:XML in listGos){
+								if(go3.id.toString() == obj2.id){
+									tempGo2.name = go3.name.toString();
+									tempGo2.evidence = go3.evidence.toString();
+									break;
+								}
+							}
+							goTermsMuestra1.appendChild(tempGo2.getContent());						
+						}
+						
+					}
+					
+				}				
+				
+			}
+			
+			
+			private function onActualizarButtonClick():void{				
+				callLater(recalculateSourceGraficas);	
+			}
+			
+			private function onFrecuenciaHSliderChange():void{
+				frecuenciaMinimaMuestreo = frecuenciaHSlider.value;
+			}
+			
+			
+			/* 
+			private function onDataGridItemClick():void{
+				
+				if(goTermsDataGrid.selectedItem != null)
+				{
+					var temp:GoTerm = new GoTerm(XML(goTermsDataGrid.selectedItem));
+					selectGoTermOnCharts(temp.id);
+					goRetriever.getGoTerm(temp.id);
+					goTermViewer.currentState = GoTermViewer.LOADING_STATE;
+				}
+				
+			}
+			
+			
+			private function onGoTermLoaded(event:GoTermEvent):void{
+				goTermViewer.setGoTerm(event.getGoTerm());
+				goTermViewer.currentState = "";
+			} */
+			
+			/*
+			*	SELECT GO TERM ON CHARTS
+			*/
+			private function selectGoTermOnCharts(idGo:String):void
+			{
+				var contador:int = 0;
+				
+				var arrayCollection:ArrayCollection = null;
+				
+				if(comboBox.selectedItem.@name == "biological_process"){					
+					arrayCollection = sourceGraficoProcess;			
+				}else if(comboBox.selectedItem.@name == "cellular_component"){					
+					arrayCollection = sourceGraficoComponent;
+				}else if(comboBox.selectedItem.@name == "molecular_function"){
+					arrayCollection = sourceGraficoFunction;					
+				}					
+				
+				var found:Boolean = false;
+				for(contador=0;contador<arrayCollection.length && !found;contador++){
+					if(arrayCollection.getItemAt(contador).id == idGo){
+						found = true;
+					}
+				}
+				contador--;
+				/* pieSeries.selectedIndex = contador;
+				
+				//Para el efecto de que salga del queso
+				var explodedPiece:Array = new Array();           
+				explodedPiece[contador] = .2;
+				pieSeries.perWedgeExplodeRadius = explodedPiece; */
+				
+				barSeriesMuestra1.selectedIndex = contador;				
+				
+				if(idGo != "Otros"){
+					goToGoTerm(idGo);
+				}
+				
+				
+			}
+			
+			private function onChartItemClick(event:ChartItemEvent):void{
+				
+				var idGo:String = event.hitData.item.id;
+				selectGoTermOnCharts(idGo);
+				
+			}
+			
+			
+			 private function goToGoTerm(id:String):void{
+				
+				var list:XMLList = goTermsMuestra1.go_term;
+				var found:Boolean = false;
+				
+				for(var i:int=0;i < list.length() && !found;i++){										
+					var tempId:String = list[i].id[0].toString();
+					if(tempId == id){
+						found = true;
+						goTermsDataGrid.selectedIndex = i;
+						goTermsDataGrid.scrollToIndex(i);
+						//goRetriever.getGoTerm(tempId);
+						//goTermViewer.currentState = GoTermViewer.LOADING_STATE;
+					}
+				}
+			} 
+			
+			
+			protected function generarGraficosButton_clickHandler(event:MouseEvent):void
+			{
+				/* if(selectedFileMuestra1 == null){
+					Alert.show("Select a file for Sample 1");					
+				}else if(selectedFileMuestra2 == null){
+					Alert.show("Select a file for Sample 2");					
+				}else{
+					recalculateSourceGraficas();
+				} */
+			}
+			
+			
+			protected function resetZoomButton_clickHandler(event:MouseEvent):void
+			{
+				barChart.scaleX = 1.0;
+				barChart.scaleY = 1.0;
+			}
+			protected function zoomInButton_clickHandler(event:MouseEvent):void
+			{
+				barChart.scaleX += 0.2;
+				barChart.scaleY	+= 0.2;
+			}
+			protected function zoomOutButton_clickHandler(event:MouseEvent):void
+			{
+				barChart.scaleX -= 0.2;
+				barChart.scaleY -= 0.2;
+			}
+		]]>
+	</fx:Script>
+	<mx:VDividedBox width="100%" height="100%">
+		<mx:VBox width="100%" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+			<s:HGroup width="100%">
+				<mx:Panel layout="absolute" headerHeight="20" title="Sample 1" 
+						  dropShadowVisible="false" borderVisible="true" width="50%" paddingBottom.State1="10" height.State1="120">
+					<mx:HBox left="10" top="5" verticalAlign="middle" right="290" top.State1="5" left.State1="10" right.State1="10">
+						<mx:Label text="File :" fontWeight="bold"/>
+						<mx:TextInput width="100%" editable="false" id="selectedFile1TextInput"/>
+						<mx:Button label="Browse" id="browseButtonMuestra1" click="onBrowseButtonMuestra1Click()"/>
+					</mx:HBox>
+					<mx:Label text="Genes number:" left="10" top="29" fontWeight="bold"/>
+					<mx:Label left="207" top="29" id="genesNumberSample1Label" text="{numeroGenesMuestra1}" top.State1="29" left.State1="180"/>
+					<mx:Label text="Annotated genes number:" fontWeight="bold" x.LoadingState="10" left.State1="10" y.LoadingState="45" top.State1="45"/>
+					<mx:Label text="{numeroGenesAnotadosMuestra1}" top="45" left="182" top.State1="45" left.State1="180"/>
+					<mx:TextInput right="10" top="5" id="legendNameSample1TextInput" text="Sample 1" width.LoadingState="168" top.State1="65" left.State1="180" right.State1="10"/>
+					<mx:Label text="Legend name:" fontWeight="bold" right="186" top="7" includeIn="LoadingState"/>
+					<mx:Label text="Legend name:" fontWeight="bold" top="65" includeIn="State1" left="10" width="85"/>
+				</mx:Panel>
+				<mx:Panel layout="absolute" headerHeight="20" title="Sample 2" 
+						  dropShadowVisible="false" borderVisible="true" width="50%" height.State1="120">
+					<mx:Label text="Genes number" left="10" top="30" fontWeight="bold"/>
+					<mx:Label left="207" top="30" id="numeroGenesMuestra2Label" text="{numeroGenesMuestra2}" top.State1="30" left.State1="180"/>
+					<mx:Label x="10" y="46" text="Annotated genes number" fontWeight="bold"/>
+					<mx:Label text="{numeroGenesAnotadosMuestra2}" top="46" left="182" top.State1="46" left.State1="180"/>
+					<mx:HBox verticalAlign="middle" left="10" right="290" top="5" top.State1="5" left.State1="10" right.State1="10">
+						<mx:Label text="File:" fontWeight="bold"/>
+						<mx:TextInput width="100%" editable="false" id="selectedFile2TextInput"/>
+						<mx:Button label="Browse" id="browseButtonMuestra2" click="onBrowseButtonMuestra2Click()"/>
+					</mx:HBox>
+					<mx:TextInput right="10" top="5" id="nombreLeyendaMuestra2TextInput" 
+								  text="Sample 2" top.State1="65" right.State1="10" width.LoadingState="168" left.State1="180"/>
+					<mx:Label text="Legend name:" fontWeight="bold" top="7" top.State1="65" right.LoadingState="186" left.State1="10"/>
+				</mx:Panel>
+			</s:HGroup>			
+			<mx:HBox verticalAlign="middle" width="100%">
+				<!--<mx:Button label="Generate charts" id="generateChartsButton" 
+						   click="generarGraficosButton_clickHandler(event)"/>-->
+				<mx:Label text="Minimum frequency for visualization:" fontWeight="bold"/>				
+				<mx:HSlider width="100%" minimum="0" maximum="100" snapInterval="1" id="frecuenciaHSlider" 
+							value="1.0" change="onFrecuenciaHSliderChange()" allowTrackClick="true" showDataTip="true"/>
+				<mx:Button label="Refresh" id="refreshButton" click="onActualizarButtonClick()"/>
+			</mx:HBox>
+			<mx:ComboBox id="comboBox" change="onComboBoxChange()"
+						 dataProvider="{comboBoxDataProvider.item}" labelField="@name"/>
+			
+		</mx:VBox>
+		<mx:HDividedBox width="100%" height="100%">	
+			<mx:VDividedBox 
+				width="70%"
+				height="100%"
+				verticalScrollPolicy="off"
+				horizontalScrollPolicy="off">
+				<!--<mx:Panel title="Pie Chart" width="100%" height="100%" layout="horizontal">
+				<mx:PieChart id="pieChart" 
+				dataProvider="{sourceGraficoProcess}" 
+				showDataTips="true"  
+				width="100%" 
+				height="100%"
+				selectionMode="single"
+				>
+				<mx:series>
+				<mx:PieSeries 
+				id="pieSeries"
+				field="frecuencia" 
+				nameField="id" 
+				labelPosition="callout"
+				/>
+				</mx:series>
+				</mx:PieChart>
+				<mx:Legend dataProvider="{pieChart}" width="100%" height="100%"/>
+				</mx:Panel>-->
+				<mx:Panel title="Bar Chart" width="100%" height="100%" layout="horizontal">
+					<mx:BarChart id="barChart" 
+								 dataProvider="{sourceGraficoProcess}" 
+								 showDataTips="true"
+								 width="100%" 
+								 height="100%"
+								 selectionMode="single">
+						<mx:verticalAxis>
+							<mx:CategoryAxis 
+								id="categoryAxis" 
+								dataProvider="{sourceGraficoProcess}" 
+								categoryField="id"
+								/>	
+						</mx:verticalAxis>
+						<mx:series>
+							<mx:BarSeries 
+								id="barSeriesMuestra1"
+								yField="id" 
+								xField="frecuencia1" 
+								displayName="{legendNameSample1TextInput.text}"
+								/>	
+							<mx:BarSeries 
+								id="barSeriesMuestra2"
+								yField="id" 
+								xField="frecuencia2" 
+								displayName="{nombreLeyendaMuestra2TextInput.text}"
+								/>
+						</mx:series>
+					</mx:BarChart>
+					<mx:Legend dataProvider="{barChart}" height="100%"/>
+				</mx:Panel>
+			</mx:VDividedBox>		
+			<mx:VDividedBox height="100%" width="30%">
+				<mx:VBox height="100%"
+						 width="100%">
+					<search:SearchBar id="searchBar" width="100%"
+									  searchIcon="{IconsManager.searchIcon}"
+									  nextResultIcon="{IconsManager.nextResultIcon}"
+									  previousResultIcon="{IconsManager.previousResultIcon}"/>
+					<mx:DataGrid id="goTermsDataGrid" width="100%" dataProvider="{goTermsMuestra1.go_term}"
+								 height="100%"				
+								 >			
+						<mx:columns>
+							<mx:DataGridColumn id="idColumn" headerText="ID" width="110"
+											   dataField="id"
+											   itemRenderer="com.era7.bioinfo.gui.go.GoTermIdItemRenderer"/>
+							<mx:DataGridColumn id="nameColumn" headerText="Name"
+											   dataField="name"/>
+							<mx:DataGridColumn id="evidenceColumn" headerText="Evidence"
+											   dataField="evidence"/>
+						</mx:columns>
+					</mx:DataGrid>				
+				</mx:VBox>		
+				<!--<gui:GoTermViewer id="goTermViewer" width="100%" height.State1="50%"/>-->
+			</mx:VDividedBox>
+		</mx:HDividedBox>
+	</mx:VDividedBox>	
+	<mx:HBox width="100%">
+		<mx:Button label="Zoom out" id="zoomOutButton" click="zoomOutButton_clickHandler(event)"/>
+		<mx:Button label="Reset zoom" id="resetZoomButton" click="resetZoomButton_clickHandler(event)"/>
+		<mx:Button label="Zoom in" id="zoomInButton" click="zoomInButton_clickHandler(event)"/>
+	</mx:HBox>
+</mx:VBox>

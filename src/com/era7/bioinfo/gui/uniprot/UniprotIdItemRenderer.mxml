@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:HBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 horizontalAlign="left"
+		 verticalAlign="middle">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.era7.util.debug.Debugger;
+			
+			import flash.net.navigateToURL;
+			
+			// Override the set method for the data property.
+			override public function set data(value:Object):void 
+			{
+				super.data = value;				
+				labelll.text = data.id.toString();
+				
+			} 
+			
+
+			protected function label_clickHandler(event:MouseEvent):void
+			{
+				navigateToURL(new URLRequest("http://www.uniprot.org/uniprot/" + data.id),"_blank");
+			}
+
+		]]>
+	</fx:Script>
+	<s:Label id="labelll" 
+			 textDecoration="underline" 
+			 color="#2650EC" 
+			 buttonMode="true"
+			 mouseChildren="false"
+			 useHandCursor="true"
+			 click="label_clickHandler(event)"/>
+</mx:HBox>

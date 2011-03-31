@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   title="Hsp viewer" 
+			   xmlns:iso="com.era7.bioinfo.iso.*"
+			   close="titlewindow1_closeHandler(event)" 
+			   width="600"
+			   layout="vertical"
+			   showCloseButton="true"
+			   horizontalScrollPolicy="off"
+			   verticalScrollPolicy="off" xmlns:gui="com.era7.util.gui.*" xmlns:hsp="com.era7.bioinfo.gui.hsp.*">
+	<fx:Script>
+		<![CDATA[
+			import com.era7.bioinfo.xml.blast.Hsp;
+			
+			import mx.events.CloseEvent;
+
+			protected function titlewindow1_closeHandler(event:CloseEvent):void
+			{
+				this.visible = false;
+			}
+			
+			public function setHsp(value:Hsp):void{
+				hspViewer.setHsp(value);
+			}
+
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<hsp:HspViewer id="hspViewer" left="0" top="0" right="0" bottom="0" width="100%">
+	</hsp:HspViewer>
+</mx:TitleWindow>

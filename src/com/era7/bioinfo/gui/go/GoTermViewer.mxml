@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml"  xmlns:ns1="com.era7.util.gui.*"
+	layout="vertical" headerHeight="15" xmlns:s="library://ns.adobe.com/flex/spark" paddingLeft="5" paddingRight="5" paddingTop="5" paddingBottom="5">
+	<mx:states>
+		<mx:State name="LoadingState">
+			<mx:AddChild position="lastChild">
+				<ns1:Spinner horizontalCenter="0" verticalCenter="0"/>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	<mx:Script>
+		<![CDATA[
+			import com.era7.bioinfo.xml.go.GoTerm;
+						
+			
+			
+			public static const LOADING_STATE:String = "LoadingState";
+			
+			protected var goTerm:GoTerm = null;
+			
+			public function setGoTerm(term:GoTerm):void{
+				goTerm = term;
+				updateContent();
+			}
+			
+			
+			protected function updateContent():void{
+				idLabel.text = goTerm.id;
+				nameTextArea.text = goTerm.name;
+				//definitionTextArea.text = goTerm.definition;
+				evidenceTextArea.text = goTerm.evidence;
+			}
+			
+		]]>
+	</mx:Script>
+	<s:HGroup>
+		<mx:Label text="ID:" fontWeight="bold"/>
+		<mx:Label id="idLabel"/>
+	</s:HGroup>	
+	<mx:Label text="Name:" fontStyle="normal" fontWeight="bold"/>
+	<mx:TextArea id="nameTextArea" editable="false"/>
+	<!--<mx:Label text="Definition:" fontWeight="bold" left="10" top="95"/>
+	<mx:TextArea left="10" top="114" right="10" bottom="73" id="definitionTextArea" editable="false"/>-->
+	
+	<mx:Label text="Evidence:" fontWeight="bold"/>
+	<mx:TextArea id="evidenceTextArea" height="40"/>
+	
+</mx:Panel>
