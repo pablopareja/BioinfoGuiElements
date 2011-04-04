@@ -4,13 +4,11 @@
 		 xmlns:mx="library://ns.adobe.com/flex/mx"
 		 xmlns:ns1="com.era7.util.gui.*" 
 		 xmlns:search="com.era7.util.gui.search.*"
-		 xmlns:gui="com.era7.bioinfo.go.gui.*" enabled.LoadingState="false"
+		 xmlns:gui="com.era7.bioinfo.go.gui.*"
 		 creationComplete="onCreationComplete()"
 		 >
 	<mx:states>
 		<s:State name="State1"/>
-		<mx:State name="LoadingState">
-		</mx:State>
 	</mx:states>
 	<fx:Declarations>
 		<!-- Place non-visual elements (e.g., services, value objects) here -->
@@ -67,14 +65,14 @@
 			private var xmlMuestra1:XML = null;
 			private var proteinsMuestra1:XMLList = null;
 			
-			private var goTermsFunctionMuestra1:XMLList = null;
+			/* private var goTermsFunctionMuestra1:XMLList = null;
 			private var goTermFunctionIdsMuestra1:Array = null;		
 			
 			private var goTermsProcessMuestra1:XMLList = null;
 			private var goTermProcessIdsMuestra1:Array = null;			
 			
 			private var goTermsComponentMuestra1:XMLList = null;
-			private var goTermComponentIdsMuestra1:Array = null;
+			private var goTermComponentIdsMuestra1:Array = null; */
 			
 			//MUESTRA 2
 			
@@ -856,49 +854,127 @@
 		]]>
 	</fx:Script>
 	<mx:VDividedBox width="100%" height="100%">
-		<mx:VBox width="100%" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+		<mx:VBox width="100%" 
+				 verticalScrollPolicy="off" 
+				 horizontalScrollPolicy="off">
 			<s:HGroup width="100%">
-				<mx:Panel layout="absolute" headerHeight="20" title="Sample 1" 
-						  dropShadowVisible="false" borderVisible="true" width="50%" paddingBottom.State1="10" height.State1="120">
-					<mx:HBox left="10" top="5" verticalAlign="middle" right="290" top.State1="5" left.State1="10" right.State1="10">
-						<mx:Label text="File :" fontWeight="bold"/>
-						<mx:TextInput width="100%" editable="false" id="selectedFile1TextInput"/>
-						<mx:Button label="Browse" id="browseButtonMuestra1" click="onBrowseButtonMuestra1Click()"/>
-					</mx:HBox>
-					<mx:Label text="Genes number:" left="10" top="29" fontWeight="bold"/>
-					<mx:Label left="207" top="29" id="genesNumberSample1Label" text="{numeroGenesMuestra1}" top.State1="29" left.State1="180"/>
-					<mx:Label text="Annotated genes number:" fontWeight="bold" x.LoadingState="10" left.State1="10" y.LoadingState="45" top.State1="45"/>
-					<mx:Label text="{numeroGenesAnotadosMuestra1}" top="45" left="182" top.State1="45" left.State1="180"/>
-					<mx:TextInput right="10" top="5" id="legendNameSample1TextInput" text="Sample 1" width.LoadingState="168" top.State1="65" left.State1="180" right.State1="10"/>
-					<mx:Label text="Legend name:" fontWeight="bold" right="186" top="7" includeIn="LoadingState"/>
-					<mx:Label text="Legend name:" fontWeight="bold" top="65" includeIn="State1" left="10" width="85"/>
+				<mx:Panel layout="absolute" 
+						  headerHeight="20" 
+						  title="Sample 1" 
+						  dropShadowVisible="false" 						  
+						  borderVisible="true"
+						  width="50%" 
+						  paddingBottom="10" 
+>
+					<s:HGroup left="10" 
+							 top="5" 
+							 verticalAlign="middle"  
+							 right="10">
+						<s:HGroup width="50%">
+							<mx:Label text="File :" 
+									  fontWeight="bold"/>
+							<mx:TextInput width="100%" 
+										  editable="false" 
+										  id="selectedFile1TextInput"/>
+							<mx:Button label="Browse" 
+									   id="browseButtonMuestra1" 
+									   click="onBrowseButtonMuestra1Click()"/>
+						</s:HGroup>
+						<s:HGroup width="50%">							
+							<mx:Label text="Legend name:" 
+									  fontWeight="bold" 
+									  />
+							<mx:TextInput id="legendNameSample1TextInput" 
+										  text="Sample 1"   
+										  width="100%"/>
+						</s:HGroup>							
+					</s:HGroup>
+					<mx:Label text="Genes number:" 
+							  left="10" 
+							  top="29" 
+							  fontWeight="bold"/>
+					<mx:Label left="207" 
+							  top="29" 
+							  id="genesNumberSample1Label" 
+							  text="{numeroGenesMuestra1}" />
+					<mx:Label text="Annotated genes number:" 
+							  fontWeight="bold" 
+							  x="10" 
+							  y="45" 
+							  top="45"/>
+					<mx:Label text="{numeroGenesAnotadosMuestra1}" 							  
+							  top="45" 
+							  left="180"/>
+					
 				</mx:Panel>
-				<mx:Panel layout="absolute" headerHeight="20" title="Sample 2" 
-						  dropShadowVisible="false" borderVisible="true" width="50%" height.State1="120">
-					<mx:Label text="Genes number" left="10" top="30" fontWeight="bold"/>
-					<mx:Label left="207" top="30" id="numeroGenesMuestra2Label" text="{numeroGenesMuestra2}" top.State1="30" left.State1="180"/>
-					<mx:Label x="10" y="46" text="Annotated genes number" fontWeight="bold"/>
-					<mx:Label text="{numeroGenesAnotadosMuestra2}" top="46" left="182" top.State1="46" left.State1="180"/>
-					<mx:HBox verticalAlign="middle" left="10" right="290" top="5" top.State1="5" left.State1="10" right.State1="10">
-						<mx:Label text="File:" fontWeight="bold"/>
-						<mx:TextInput width="100%" editable="false" id="selectedFile2TextInput"/>
-						<mx:Button label="Browse" id="browseButtonMuestra2" click="onBrowseButtonMuestra2Click()"/>
-					</mx:HBox>
-					<mx:TextInput right="10" top="5" id="nombreLeyendaMuestra2TextInput" 
-								  text="Sample 2" top.State1="65" right.State1="10" width.LoadingState="168" left.State1="180"/>
-					<mx:Label text="Legend name:" fontWeight="bold" top="7" top.State1="65" right.LoadingState="186" left.State1="10"/>
+				<mx:Panel layout="absolute" 
+						  headerHeight="20" 
+						  title="Sample 2" 
+						  dropShadowVisible="false" 
+						  borderVisible="true" 
+						  width="50%" 
+>
+					<mx:Label text="Genes number" 
+							  left="10" 
+							  top="30" 
+							  fontWeight="bold"/>
+					<mx:Label id="numeroGenesMuestra2Label" 
+							  text="{numeroGenesMuestra2}" 
+							  top="30" 
+							  left="180"/>
+					<mx:Label x="10" 
+							  y="46" 
+							  text="Annotated genes number" 
+							  fontWeight="bold"/>
+					<mx:Label text="{numeroGenesAnotadosMuestra2}" 
+							  top="46" 
+							  left="182" />
+					<s:HGroup verticalAlign="middle" 
+							 left="10" 
+							 right="10" 
+							 top="5" >
+						<s:HGroup width="50%">
+							<mx:Label text="File:" 
+									  fontWeight="bold"/>
+							<mx:TextInput width="100%" 
+										  editable="false" 
+										  id="selectedFile2TextInput"/>
+							<mx:Button label="Browse" 
+									   id="browseButtonMuestra2" 
+									   click="onBrowseButtonMuestra2Click()"/>
+						</s:HGroup>
+						<s:HGroup width="50%">
+							<mx:Label text="Legend name:" 
+									  fontWeight="bold" />
+							<mx:TextInput width="100%"
+										  id="nombreLeyendaMuestra2TextInput" 
+										  text="Sample 2" />							
+						</s:HGroup>						
+					</s:HGroup>
+					
 				</mx:Panel>
 			</s:HGroup>			
-			<mx:HBox verticalAlign="middle" width="100%">
-				<!--<mx:Button label="Generate charts" id="generateChartsButton" 
-						   click="generarGraficosButton_clickHandler(event)"/>-->
-				<mx:Label text="Minimum frequency for visualization:" fontWeight="bold"/>				
-				<mx:HSlider width="100%" minimum="0" maximum="100" snapInterval="1" id="frecuenciaHSlider" 
-							value="1.0" change="onFrecuenciaHSliderChange()" allowTrackClick="true" showDataTip="true"/>
-				<mx:Button label="Refresh" id="refreshButton" click="onActualizarButtonClick()"/>
+			<mx:HBox verticalAlign="middle" 
+					 width="100%">
+				<mx:Label text="Minimum frequency for visualization:" 
+						  fontWeight="bold"/>				
+				<mx:HSlider width="100%" 
+							minimum="0" 
+							maximum="100" 
+							snapInterval="1" 
+							id="frecuenciaHSlider" 
+							value="1.0" 
+							change="onFrecuenciaHSliderChange()" 
+							allowTrackClick="true" 
+							showDataTip="true"/>
+				<mx:Button label="Refresh" 
+						   id="refreshButton" 
+						   click="onActualizarButtonClick()"/>
 			</mx:HBox>
-			<mx:ComboBox id="comboBox" change="onComboBoxChange()"
-						 dataProvider="{comboBoxDataProvider.item}" labelField="@name"/>
+			<mx:ComboBox id="comboBox" 
+						 change="onComboBoxChange()"
+						 dataProvider="{comboBoxDataProvider.item}" 
+						 labelField="@name"/>
 			
 		</mx:VBox>
 		<mx:HDividedBox width="100%" height="100%">	
@@ -907,25 +983,6 @@
 				height="100%"
 				verticalScrollPolicy="off"
 				horizontalScrollPolicy="off">
-				<!--<mx:Panel title="Pie Chart" width="100%" height="100%" layout="horizontal">
-				<mx:PieChart id="pieChart" 
-				dataProvider="{sourceGraficoProcess}" 
-				showDataTips="true"  
-				width="100%" 
-				height="100%"
-				selectionMode="single"
-				>
-				<mx:series>
-				<mx:PieSeries 
-				id="pieSeries"
-				field="frecuencia" 
-				nameField="id" 
-				labelPosition="callout"
-				/>
-				</mx:series>
-				</mx:PieChart>
-				<mx:Legend dataProvider="{pieChart}" width="100%" height="100%"/>
-				</mx:Panel>-->
 				<mx:Panel title="Bar Chart" width="100%" height="100%" layout="horizontal">
 					<mx:BarChart id="barChart" 
 								 dataProvider="{sourceGraficoProcess}" 
@@ -969,23 +1026,32 @@
 								 height="100%"				
 								 >			
 						<mx:columns>
-							<mx:DataGridColumn id="idColumn" headerText="ID" width="110"
+							<mx:DataGridColumn id="idColumn" 
+											   headerText="ID" 
+											   width="110"
 											   dataField="id"
 											   itemRenderer="com.era7.bioinfo.gui.go.GoTermIdItemRenderer"/>
-							<mx:DataGridColumn id="nameColumn" headerText="Name"
+							<mx:DataGridColumn id="nameColumn" 
+											   headerText="Name"
 											   dataField="name"/>
-							<mx:DataGridColumn id="evidenceColumn" headerText="Evidence"
+							<mx:DataGridColumn id="evidenceColumn" 
+											   headerText="Evidence"
 											   dataField="evidence"/>
 						</mx:columns>
 					</mx:DataGrid>				
 				</mx:VBox>		
-				<!--<gui:GoTermViewer id="goTermViewer" width="100%" height.State1="50%"/>-->
 			</mx:VDividedBox>
 		</mx:HDividedBox>
 	</mx:VDividedBox>	
 	<mx:HBox width="100%">
-		<mx:Button label="Zoom out" id="zoomOutButton" click="zoomOutButton_clickHandler(event)"/>
-		<mx:Button label="Reset zoom" id="resetZoomButton" click="resetZoomButton_clickHandler(event)"/>
-		<mx:Button label="Zoom in" id="zoomInButton" click="zoomInButton_clickHandler(event)"/>
+		<mx:Button label="Zoom out" 
+				   id="zoomOutButton" 
+				   click="zoomOutButton_clickHandler(event)"/>
+		<mx:Button label="Reset zoom" 
+				   id="resetZoomButton" 
+				   click="resetZoomButton_clickHandler(event)"/>
+		<mx:Button label="Zoom in"
+				   id="zoomInButton" 
+				   click="zoomInButton_clickHandler(event)"/>
 	</mx:HBox>
 </mx:VBox>
