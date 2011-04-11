@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:ns1="com.era7.util.gui.*" 
+		 xmlns:search="com.era7.util.gui.search.*"
+		 xmlns:gui="com.era7.bioinfo.go.gui.*"
+		 creationComplete="onCreationComplete()"
+		  fontWeight="bold" paddingLeft="10" paddingRight="10" paddingTop="10" paddingBottom="10">
+	<mx:states>
+		<s:State name="State1"/>
+	</mx:states>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>	
+	<fx:Script>
+		<![CDATA[
+			import com.era7.bioinfo.gui.IconsManager;
+			import com.era7.bioinfo.gui.go.events.GoAnnotationChartEvent;
+			import com.era7.bioinfo.gui.go.util.GoRetriever;
+			import com.era7.bioinfo.xml.go.GoTerm;
+			import com.era7.util.debug.Debugger;
+			import com.era7.util.events.SearchBarEvent;
+			
+			import mx.charts.events.ChartItemEvent;
+			import mx.charts.series.BarSeries;
+			import mx.collections.ArrayCollection;
+			import mx.collections.Sort;
+			import mx.collections.SortField;
+			import mx.controls.Alert;
+						
+			public static const LOADING_STATE:String = "LoadingState";
+			
+			
+			
+			[Bindable]
+			private var chartXML:XML = null;
+			
+			private var mainXML:XML = null;
+			
+			[Bindable]
+			private var chartArrayCollection:ArrayCollection = null;
+			
+			
+			[Bindable]
+			private var comboBoxDataProvider:XML = <items>
+													<item name="Biological process" />
+													<item name="Molecular function" />
+													<item name="Cellular component" />
+												  </items>;											  
+			
+			
+			private var minimumFrequencyForVisualization:int = 50;		
+			
+			[Bindable]
+			private var numeroGenesMuestra1:Number = 0;
+			[Bindable]
+			private var numeroGenesAnotadosMuestra1:Number = 0;
+									
+			
+			/*
+			*	ON CREATION COMPLETE
+			*/
+			protected function onCreationComplete():void
+			{
+								
+				searchBar.addEventListener(SearchBarEvent.GO_TO_ELEMENT,onGoToElement);
+				searchBar.addEventListener(SearchBarEvent.SEARCH,onSearch);
+				
+				barChart.addEventListener(ChartItemEvent.ITEM_CLICK,onChartItemClick);
+				
+			}
+			
+			public function setMainXML(value:XML):void{
+				mainXML = value;
+				onComboBoxChange();
+			}
+			
+			protected function onSearch(event:SearchBarEvent):void{
+				
+				var text:String = event.getSearchText();
+				
+				var array:Array = new Array();		
+				var list:XMLList = XMLList(goTermsDataGrid.dataProvider);
+				var goTermsLength:int = list.length();				
+				var goIdPlusName:String = "";
+				
+				for(var i:int=0;i < goTermsLength ;i++){										
+					goIdPlusName = list[i].id[0].toString()+" "+list[i].name[0].toString();
+					goIdPlusName = goIdPlusName.toLowerCase();
+					if( goIdPlusName.indexOf(text.toLowerCase())!= -1){
+						array.push(list[i].id[0].toString());
+					}					
+				}
+				
+				if(array.length == 0){
+					searchBar.setResults(null);
+				}else{
+					searchBar.setResults(array);
+				}								
+				
+			}
+			protected function onGoToElement(event:SearchBarEvent):void{
+				
+				var idToFind:String = event.getSearchText();
+				selectGoTermOnCharts(idToFind);
+				goToGoTerm(idToFind);
+				
+			}
+			
+			protected function onBrowseButtonMuestra1Click():void
+			{
+				dispatchEvent(new GoAnnotationChartEvent(GoAnnotationChartEvent.UPLOAD_FILE,1,true));				
+			}
+			/* protected function onBrowseButtonMuestra2Click():void
+			{
+				dispatchEvent(new GoAnnotationChartEvent(GoAnnotationChartEvent.UPLOAD_FILE,2,true));		
+			} */
+			
+			
+			private function onComboBoxChange():void{
+				if(comboBox.selectedItem.@name == "Biological process")
+				{
+					chartXML = mainXML.biological_process[0];
+					
+				}else if(comboBox.selectedItem.@name == "Cellular component")
+				{
+					chartXML = mainXML.cellular_component[0];
+					
+				}else if(comboBox.selectedItem.@name == "Molecular function")
+				{
+					chartXML = mainXML.molecular_function[0];					
+				}
+				
+				//Debugger.appendText(chartSource.toXMLString(),Debugger.ERROR_MODE);
+				
+				//-----------Removing chart current selection-----
+				barSeriesMuestra1.selectedIndex = -1;
+				//-------------------------------------------------
+				
+				refreshArrayCollection();
+				
+			}
+			
+			protected function refreshArrayCollection():void{
+				
+				chartArrayCollection = new ArrayCollection();
+				
+				for each(var goXml:XML in chartXML.children()){
+					
+					var tempTerm:GoTerm = new GoTerm(goXml);
+					chartArrayCollection.addItem({id:tempTerm.id, frequency_percentage:tempTerm.frequencyPercentage});
+				}
+			}
+			
+			
+			/* private function onFrecuenciaHSliderChange():void{
+				minimumFrequencyForVisualization = frecuenciaHSlider.value;
+			} */			
+			
+			 
+			private function onDataGridItemClick():void{
+				
+				if(goTermsDataGrid.selectedItem != null)
+				{
+					var temp:GoTerm = new GoTerm(XML(goTermsDataGrid.selectedItem));
+					selectGoTermOnCharts(temp.id);
+				}
+				
+			}
+			
+			
+			/*
+			*	SELECT GO TERM ON CHARTS
+			*/
+			private function selectGoTermOnCharts(idGo:String):void
+			{				
+				
+				//Debugger.appendText("select go term on charts: " + idGo,Debugger.ERROR_MODE);
+				
+				var counter:Number = 0;				
+				var found:Boolean = false;
+				
+				for(counter = 0;counter < chartArrayCollection.length && !found ;counter++){
+					if(chartArrayCollection[counter].id == idGo){
+						found = true;
+					}
+				}
+				counter--;
+				
+				barSeriesMuestra1.selectedIndex = counter;	
+				
+				//Debugger.appendText("barSeriesMuestra1.selectedIndex: " + barSeriesMuestra1.selectedIndex,Debugger.ERROR_MODE);
+				
+				//goToGoTerm(idGo);				
+				
+				
+			}
+			
+			private function onChartItemClick(event:ChartItemEvent):void{
+				
+				var idGo:String = event.hitData.item.id;
+				//Debugger.appendText("idGo: " + idGo,Debugger.ERROR_MODE);
+				goToGoTerm(idGo);
+				
+			}
+			
+			
+			 private function goToGoTerm(id:String):void{
+				
+				var list:XMLList = XMLList(goTermsDataGrid.dataProvider);
+				var found:Boolean = false;
+				
+				for(var i:int=0;i < list.length() && !found;i++){										
+					var tempId:String = list[i].id[0].toString();
+					if(tempId == id){
+						found = true;
+						goTermsDataGrid.selectedIndex = i;
+						goTermsDataGrid.scrollToIndex(i);
+						//goRetriever.getGoTerm(tempId);
+						//goTermViewer.currentState = GoTermViewer.LOADING_STATE;
+					}
+				}
+			} 
+			
+			
+			protected function resetZoomButton_clickHandler(event:MouseEvent):void
+			{
+				barChart.scaleX = 1.0;
+				barChart.scaleY = 1.0;
+			}
+			protected function zoomInButton_clickHandler(event:MouseEvent):void
+			{
+				barChart.scaleX += 0.2;
+				barChart.scaleY	+= 0.2;
+			}
+			protected function zoomOutButton_clickHandler(event:MouseEvent):void
+			{
+				barChart.scaleX -= 0.2;
+				barChart.scaleY -= 0.2;
+			}
+
+			protected function refreshButton_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+			}
+
+		]]>
+	</fx:Script>
+	<mx:VDividedBox width="100%" height="100%">
+		<mx:VBox width="100%" 
+				 verticalScrollPolicy="off" 
+				 horizontalScrollPolicy="off">
+			<mx:HBox width="100%" paddingLeft="5" paddingRight="5" paddingTop="5" paddingBottom="5" backgroundColor="#E6E6E6" cornerRadius="10" verticalAlign="middle">
+				
+				<s:Label text="Displaying terms from the ontology: "/>
+				<mx:ComboBox id="comboBox" 
+							 change="onComboBoxChange()"
+							 dataProvider="{comboBoxDataProvider.item}" 
+							 labelField="@name"/>
+				<mx:Spacer width="100%"/>
+				<mx:SWFLoader source="{IconsManager.loadFileButton}"
+						   id="loadFileButton" 
+						   click="onBrowseButtonMuestra1Click()" 
+						   buttonMode="true"
+						   mouseChildren="false"
+						   useHandCursor="true"/>
+				<!-- <mx:Panel layout="absolute" 
+					headerHeight="20" 
+					title="Sample 1" 
+					dropShadowVisible="false" 						  
+					borderVisible="true"
+					width="100%" 
+					paddingBottom="0"  height="100" cornerRadius="10">					
+					<mx:Label text="File :" 
+							  fontWeight="bold" left="10" top="5"/>
+					<mx:TextInput 
+							  editable="false" 
+							  id="selectedFile1TextInput" left="120" top="5" right="90"/>
+						
+					<mx:Label text="Legend name:" 
+							  fontWeight="bold" 
+							  left="10" 
+							  top="40"
+							  />
+					<mx:TextInput id="legendNameSample1TextInput" 
+								  text="Sample 1" 
+								  left="120" 
+								  top="40"/>
+					
+					<mx:Label text="Genes number:" 
+							  left="10" 
+							  top="29" 
+							  fontWeight="bold"/>
+					<mx:Label left="180" 
+							  top="29" 
+							  id="genesNumberSample1Label" 
+							  text="{numeroGenesMuestra1}" />
+					<mx:Label text="Annotated genes number:" 
+							  fontWeight="bold" 
+							  x="10" 
+							  top="50"/>
+					<mx:Label text="{numeroGenesAnotadosMuestra1}" 							  
+							  top="50" 
+							  left="180"/>
+					
+					
+				</mx:Panel>
+				
+				-->
+				<!--<mx:Panel layout="absolute" 
+						  headerHeight="20" 
+						  title="Sample 2" 
+						  dropShadowVisible="false" 
+						  borderVisible="true" 
+						  width="50%" >
+					<mx:Label text="Genes number" 
+							  left="10" 
+							  top="30" 
+							  fontWeight="bold"/>
+					<mx:Label id="numeroGenesMuestra2Label" 
+							  text="{numeroGenesMuestra2}" 
+							  top="30" 
+							  left="180"/>
+					<mx:Label x="10" 
+							  y="46" 
+							  text="Annotated genes number" 
+							  fontWeight="bold"/>
+					<mx:Label text="{numeroGenesAnotadosMuestra2}" 
+							  top="46" 
+							  left="182" />
+					<s:HGroup verticalAlign="middle" 
+							 left="10" 
+							 right="10" 
+							 top="5" >
+						<s:HGroup width="50%">
+							<mx:Label text="File:" 
+									  fontWeight="bold"/>
+							<mx:TextInput width="100%" 
+										  editable="false" 
+										  id="selectedFile2TextInput"/>
+							<mx:Button label="Browse" 
+									   id="browseButtonMuestra2" 
+									   click="onBrowseButtonMuestra2Click()"/>
+						</s:HGroup>
+						<s:HGroup width="50%">
+							<mx:Label text="Legend name:" 
+									  fontWeight="bold" />
+							<mx:TextInput width="100%"
+										  id="nombreLeyendaMuestra2TextInput" 
+										  text="Sample 2" />							
+						</s:HGroup>						
+					</s:HGroup>
+					
+				</mx:Panel>
+				-->
+			</mx:HBox>			
+			<!--<mx:HBox verticalAlign="middle" 
+					 width="100%" >
+				<mx:Label text="Minimum frequency for visualization:" 
+						  fontWeight="bold"/>				
+				<mx:HSlider width="100%" 
+							minimum="0" 
+							maximum="100" 
+							snapInterval="1" 
+							id="frecuenciaHSlider" 
+							value="1.0" 
+							change="onFrecuenciaHSliderChange()" 
+							allowTrackClick="true" 
+							showDataTip="true"/>
+				<mx:Button label="Refresh" 
+						   id="refreshButton" 
+						   click="refreshButton_clickHandler(event)"/>
+			</mx:HBox>-->
+			<!--<s:HGroup width="100%"
+					  verticalAlign="middle">
+			</s:HGroup>-->	
+		</mx:VBox>
+		<mx:HDividedBox width="100%" height="100%">	
+			<mx:VDividedBox 
+				width="70%"
+				height="100%"
+				verticalScrollPolicy="off"
+				horizontalScrollPolicy="off">
+				<mx:Panel title="GO Terms frequency Chart" 
+						  width="100%" 
+						  height="100%" 
+						  layout="horizontal" 
+						  cornerRadius="10" 
+						  paddingLeft="10" 
+						  paddingRight="10" 
+						  paddingTop="10" 
+						  paddingBottom="10" chromeColor="#D0D0D0">
+					<s:VGroup height="100%"
+							  width="100%">
+						<mx:BarChart id="barChart" 
+									 dataProvider="{chartXML.go_term}" 
+									 showDataTips="true"
+									 width="100%" 
+									 height="100%"
+									 selectionMode="single"								 
+									 itemClick="onChartItemClick(event)">
+							<mx:verticalAxis>
+								<mx:CategoryAxis 
+									id="categoryAxis" 
+									dataProvider="{chartXML.go_term}" 
+									categoryField="id"
+									/>	
+							</mx:verticalAxis>
+							<mx:series>
+								<mx:BarSeries 
+									id="barSeriesMuestra1"
+									yField="id" 
+									xField="frequency_percentage" 
+									displayName="GO Term frequency"
+									/>	
+								<!--<mx:BarSeries 
+								id="barSeriesMuestra2"
+								yField="id" 
+								xField="frecuencia2" 
+								displayName="{nombreLeyendaMuestra2TextInput.text}"
+								/>-->
+							</mx:series>
+						</mx:BarChart>
+						<!-- <mx:HBox width="100%" horizontalAlign="right" verticalAlign="middle">
+							<mx:Button label="Zoom out" 
+									   id="zoomOutButton" 
+									   click="zoomOutButton_clickHandler(event)"/>
+							<mx:Button label="Reset zoom" 
+									   id="resetZoomButton" 
+									   click="resetZoomButton_clickHandler(event)"/>
+							<mx:Button label="Zoom in"
+									   id="zoomInButton" 
+									   click="zoomInButton_clickHandler(event)"/>
+						</mx:HBox> -->
+					</s:VGroup>					
+					<!--<mx:Legend dataProvider="{barChart}" height="100%"/>	-->				
+				</mx:Panel>
+			</mx:VDividedBox>		
+			<mx:VDividedBox height="100%" width="30%">
+				<mx:VBox height="100%"
+						 width="100%">
+					<search:SearchBar id="searchBar" width="100%"
+									  searchIcon="{IconsManager.searchIcon}"
+									  nextResultIcon="{IconsManager.nextResultIcon}"
+									  previousResultIcon="{IconsManager.previousResultIcon}" 
+									  backgroundColor="#E6E6E6" 
+									  cornerRadius="10"/>
+					<mx:DataGrid id="goTermsDataGrid" 
+								 width="100%" 
+								 dataProvider="{chartXML.go_term}"
+								 height="100%"
+								 itemClick="onDataGridItemClick()" >			
+						<mx:columns>
+							<mx:DataGridColumn id="idColumn" 
+											   headerText="ID" 
+											   width="110"
+											   dataField="id"
+											   itemRenderer="com.era7.bioinfo.gui.go.GoTermIdItemRenderer"/>
+							<mx:DataGridColumn id="nameColumn" 
+											   headerText="Name"
+											   dataField="name"/>
+							<mx:DataGridColumn id="evidenceColumn" 
+											   headerText="Evidence"
+											   dataField="evidence"/>
+						</mx:columns>
+					</mx:DataGrid>				
+				</mx:VBox>		
+			</mx:VDividedBox>
+		</mx:HDividedBox>
+	</mx:VDividedBox>	
+</mx:VBox>
