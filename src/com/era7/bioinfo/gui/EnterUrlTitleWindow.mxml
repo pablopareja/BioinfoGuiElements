@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   width="510" 
+			   height="168" 
+			   title="Enter the url of the file"  
+			   close="titlewindow1_closeHandler(event)">
+	<s:layout>
+		<s:VerticalLayout paddingLeft="20" 
+						  paddingRight="20" 
+						  paddingTop="20" 
+						  paddingBottom="20"/>
+	</s:layout>
+
+	<fx:Script>
+		<![CDATA[
+			import com.era7.bioinfo.gui.events.UrlEvent;
+			
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			
+			protected function sendButton_clickHandler(event:MouseEvent):void
+			{
+				var text:String = urlTextInput.text;
+				
+				if(text == ""){
+					Alert.show("Please enter a url value");
+				}else{
+					var splitArray:Array = text.split(".");
+					
+					if(splitArray[splitArray.length - 1] != "xml"){
+						Alert.show("Please enter a valid XML file url");
+					}else{
+						dispatchEvent(new UrlEvent(UrlEvent.URL_SELECTED,urlTextInput.text,true));
+						visible = false;
+					}
+				} 				
+				
+			}
+
+			protected function titlewindow1_closeHandler(event:CloseEvent):void
+			{
+				this.visible = false;
+			}
+
+		]]>
+	</fx:Script>
+
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:Label text="XML file URL:" 
+			 fontWeight="bold"/>
+	<s:TextInput width="100%" 
+				 enabled="true" 
+				 editable="true"
+				 id="urlTextInput" 
+				 text="http://*.xml"/>
+	<s:HGroup>
+		<s:Button label="Send" 
+				  id="sendButton" click="sendButton_clickHandler(event)"/>
+	</s:HGroup>	
+</s:TitleWindow>

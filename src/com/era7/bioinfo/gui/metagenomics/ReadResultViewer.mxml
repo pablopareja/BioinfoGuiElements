@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas  xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			xmlns:mx="library://ns.adobe.com/flex/mx" 
+			width="100%"
+			horizontalScrollPolicy="off"
+			verticalScrollPolicy="off" backgroundColor="#FFFFFF" height="230">
+	<fx:Script>
+		<![CDATA[
+			import com.era7.bioinfo.xml.metagenomics.ReadResult;
+			
+			
+			[Bindable]
+			protected var readResult:ReadResult; 
+			
+			public function setReadResult(value:ReadResult):void{
+				readResult = value;
+			}
+		]]>
+	</fx:Script>	
+	<mx:HBox left="10" right="10" top="10">
+		<mx:VBox width="50%" verticalGap="2">
+			<mx:HBox verticalAlign="middle" height="22">
+				<mx:Label text="Read ID:" fontWeight="bold"/>
+				<mx:Label selectable="true" id="queryFromLabel" text="{readResult.readId}"/>				
+			</mx:HBox>
+			<mx:HBox verticalAlign="middle">
+				<mx:Label text="Query length:" fontWeight="bold"/>
+				<mx:Label text="{readResult.queryLength}" selectable="true" id="hitFromLabel"/>				
+			</mx:HBox>
+			<mx:HBox verticalAlign="middle">
+				<mx:Label text="Alignment length:" fontWeight="bold"/>
+				<mx:Label selectable="true" id="bitScoreLabel" text="{readResult.alignmentLength}"/>				
+			</mx:HBox>
+			<mx:HBox verticalAlign="middle">
+				<mx:Label text="GI ID:" fontWeight="bold"/>
+				<mx:Label selectable="true" id="numLabel" text="{readResult.giId}"/>
+			</mx:HBox>
+		</mx:VBox>
+		<mx:VBox width="50%" verticalGap="2">
+			<mx:HBox verticalAlign="middle" height="22">
+			</mx:HBox>	
+			<mx:HBox verticalAlign="middle">
+				<mx:Label text="Hit length:" fontWeight="bold"/>
+				<mx:Label text="{readResult.hitLength}" id="hitToLabel" selectable="true"/>
+			</mx:HBox>		
+			<mx:HBox verticalAlign="middle">
+				<mx:Label text="Identity:" fontWeight="bold"/>
+				<mx:Label text="{readResult.identity}" selectable="true" id="scoreLabel"/>
+			</mx:HBox>	
+			<mx:HBox verticalAlign="middle">
+				<mx:Label text="Evalue:" fontWeight="bold"/>
+				<mx:Label text="{readResult.evalue}" selectable="true" id="queryFrameLabel"/>
+			</mx:HBox>	
+		</mx:VBox>		
+	</mx:HBox>
+	<mx:Canvas backgroundColor="#F2F2F2" 
+			   horizontalScrollPolicy="on" 
+			   bottom="10" 
+			   left="10" 
+			   right="10" 
+ top="109">
+		<mx:HBox verticalAlign="middle" left="5" top="5">
+			<mx:Label text="Query seq:" width="50" fontWeight="bold"/>
+			<mx:HBox 
+				backgroundColor="#FFFFFF">
+				<mx:Label text="{readResult.querySequence}" 
+						  selectable="true" 
+						  id="qSeqLabel" 
+						  fontFamily="Courier New" />
+			</mx:HBox>			
+		</mx:HBox>
+		<mx:HBox verticalAlign="middle" left="5" top="30">
+			<mx:Label text="Midline:" width="50" fontWeight="bold"/>
+			<mx:HBox 
+				backgroundColor="#FFFFFF">
+				<mx:Label text="{readResult.midline}" 
+						  selectable="true" 
+						  id="midlineLabel" 
+						  fontFamily="Courier New" />
+			</mx:HBox>	
+		</mx:HBox>
+		<mx:HBox verticalAlign="middle" left="5" top="55">
+			<mx:Label text="Hit sequence:" width="50" fontWeight="bold"/>
+			<mx:HBox 
+				backgroundColor="#FFFFFF">
+				<mx:Label text="{readResult.hitSequence}" 
+						  selectable="true" 
+						  id="h" 
+						  fontFamily="Courier New" />
+			</mx:HBox>	
+		</mx:HBox>		
+	</mx:Canvas>
+</mx:Canvas>

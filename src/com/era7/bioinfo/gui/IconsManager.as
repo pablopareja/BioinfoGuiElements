@@ -25,9 +25,19 @@ package com.era7.bioinfo.gui
 		[Embed(source="../../../../../assets/icons/logoBio4jTwitter.jpg")]
 		public static var bio4jLogo:Class;
 		
+		
+		//----------------------LOAD FILE---------------------
 		[Bindable]
-		[Embed(source="../../../../../assets/icons/loadFileButton.jpg")]
+		[Embed(source="../../../../../assets/icons/_LOADFILE.jpg")]
 		public static var loadFileButton:Class;
+		
+		[Bindable]
+		[Embed(source="../../../../../assets/icons/_LOADFILE_URL.jpg")]
+		public static var loadFileFromUrlButton:Class;
+		
+		[Bindable]
+		[Embed(source="../../../../../assets/loading.swf")]
+		public static var loadingSWF:Class;
 
 	}
 }
