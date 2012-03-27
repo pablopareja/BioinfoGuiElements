@@ -10,11 +10,11 @@
 			import com.era7.bioinfo.xml.ncbi.NCBITaxonomyNode;
 			
 			[Bindable]
-			protected var xml:XML = null;
+			protected var xmlList:XMLList = null;
 			
 			
-			public function setXMLSource(source:XML):void{
-				xml = source;
+			public function setXMLListSource(source:XMLList):void{
+				xmlList = source;
 			}
 			
 			protected function absoluteFreqSortCompareFunction(obj1:Object,obj2:Object):int{
@@ -41,7 +41,7 @@
 		]]>
 	</fx:Script>
 	<mx:DataGrid id="dataGrid"
-				 dataProvider="{xml.child(NCBITaxonomyNode.TAG_NAME)}"
+				 dataProvider="{xmlList}"
 				 width="100%" height="100%">
 		<mx:columns>
 			<mx:DataGridColumn id="scientificNameColumns" 

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas  xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:mx="library://ns.adobe.com/flex/mx" 
+		  width="100%"
+		  horizontalScrollPolicy="off"
+		  verticalScrollPolicy="off" height="288">
+	<fx:Script>
+		<![CDATA[
+			import com.era7.bioinfo.xml.blast.Hsp;
+			
+			
+			[Bindable]
+			protected var hsp:Hsp = null;
+			
+			public function setHsp(value:Hsp):void{
+				hsp = value;
+			}
+		]]>
+	</fx:Script>	
+	<mx:HBox left="10" right="10" top="10">
+		<mx:VBox width="50%" verticalGap="2">
+			<mx:HBox verticalAlign="middle">
+				<mx:Label text="Query from:" fontWeight="bold"/>
+				<mx:Label selectable="true" id="queryFromLabel" text="{hsp.queryFrom}"/>				
+			</mx:HBox>
+			<mx:HBox verticalAlign="middle">
+				<mx:Label text="Hit from:" fontWeight="bold"/>
+				<mx:Label text="{hsp.hitFrom}" selectable="true" id="hitFromLabel"/>				
+			</mx:HBox>
+			<mx:HBox verticalAlign="middle">
+				<mx:Label text="Bit score:" fontWeight="bold"/>
+				<mx:Label selectable="true" id="bitScoreLabel" text="{hsp.bitScore}"/>				
+			</mx:HBox>
+			<mx:HBox verticalAlign="middle">
+				<mx:Label text="Num:" fontWeight="bold"/>
+				<mx:Label selectable="true" id="numLabel" text="{hsp.num}"/>
+			</mx:HBox>
+			<mx:HBox verticalAlign="middle">
+				<mx:Label text="Identity:" fontWeight="bold"/>
+				<mx:Label selectable="true" id="identityLabel" text="{hsp.identity}"/>				
+			</mx:HBox>
+			<mx:HBox verticalAlign="middle">
+				<mx:Label text="Gap:" fontWeight="bold"/>
+				<mx:Label selectable="true" id="gapsLabel" text="{hsp.gaps}"/>				
+			</mx:HBox>
+		</mx:VBox>
+		<mx:VBox width="50%" verticalGap="2">
+			<mx:HBox verticalAlign="middle">
+				<mx:Label text="Query to:" fontWeight="bold"/>
+				<mx:Label text="{hsp.queryTo}" selectable="true" id="queryToLabel"/>
+			</mx:HBox>	
+			<mx:HBox verticalAlign="middle">
+				<mx:Label text="Hit to:" fontWeight="bold"/>
+				<mx:Label text="{hsp.hitTo}" id="hitToLabel" selectable="true"/>
+			</mx:HBox>		
+			<mx:HBox verticalAlign="middle">
+				<mx:Label text="Score:" fontWeight="bold"/>
+				<mx:Label text="{hsp.score}" selectable="true" id="scoreLabel"/>
+			</mx:HBox>	
+			<mx:HBox verticalAlign="middle">
+				<mx:Label text="Query frame:" fontWeight="bold"/>
+				<mx:Label text="{hsp.queryFrame}" selectable="true" id="queryFrameLabel"/>
+			</mx:HBox>	
+			<mx:HBox verticalAlign="middle">
+				<mx:Label text="Positive:" fontWeight="bold"/>
+				<mx:Label text="{hsp.positive}" selectable="true" id="positiveLabel"/>
+			</mx:HBox>	
+			<mx:HBox verticalAlign="middle">
+				<mx:Label text="Align len:" fontWeight="bold"/>
+				<mx:Label text="{hsp.alignLen}" selectable="true" id="alignLenLabel"/>
+			</mx:HBox>	
+		</mx:VBox>		
+	</mx:HBox>
+	<mx:HBox verticalAlign="middle" left="10" right="10" top="150">
+		<mx:Label text="Evalue" fontWeight="bold"/>
+		<mx:Label selectable="true" id="evalueLabel" text="{hsp.evalue}"/>
+	</mx:HBox>
+	<mx:Canvas backgroundColor="#F2F2F2" 
+			   horizontalScrollPolicy="on" 
+			   bottom="10" 
+			   left="10" 
+			   right="10" 
+			   height="100">
+		<mx:HBox verticalAlign="middle" left="5" top="5">
+			<mx:Label text="Qseq:" width="50" fontWeight="bold"/>
+			<mx:HBox 
+					 backgroundColor="#FFFFFF">
+				<mx:Label text="{hsp.qSeq}" 
+						  selectable="true" 
+						  id="qSeqLabel" 
+						  fontFamily="Courier New" />
+			</mx:HBox>			
+		</mx:HBox>
+		<mx:HBox verticalAlign="middle" left="5" top="30">
+			<mx:Label text="Midline:" width="50" fontWeight="bold"/>
+			<mx:HBox 
+					 backgroundColor="#FFFFFF">
+				<mx:Label text="{hsp.midline}" 
+						 selectable="true" 
+						 id="midlineLabel" 
+						 fontFamily="Courier New" />
+			</mx:HBox>	
+		</mx:HBox>
+		<mx:HBox verticalAlign="middle" left="5" top="55">
+			<mx:Label text="Hseq:" width="50" fontWeight="bold"/>
+			<mx:HBox 
+					 backgroundColor="#FFFFFF">
+				<mx:Label text="{hsp.hSeq}" 
+						 selectable="true" 
+						 id="hSeqLabel" 
+						 fontFamily="Courier New" />
+			</mx:HBox>	
+		</mx:HBox>		
+	</mx:Canvas>
+</mx:Canvas>

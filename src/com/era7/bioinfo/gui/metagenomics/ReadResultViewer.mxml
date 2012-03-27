@@ -3,10 +3,16 @@
 			xmlns:mx="library://ns.adobe.com/flex/mx" 
 			width="100%"
 			horizontalScrollPolicy="off"
-			verticalScrollPolicy="off" backgroundColor="#FFFFFF" height="230">
+			verticalScrollPolicy="off" backgroundColor="#FFFFFF" 
+			height="250" 
+			xmlns:s="library://ns.adobe.com/flex/spark">
 	<fx:Script>
 		<![CDATA[
-			import com.era7.bioinfo.xml.metagenomics.ReadResult;
+			import com.era7.bioinfo.xml.mg7.ReadResult;
+			
+			import flashx.textLayout.formats.TextLayoutFormat;
+			
+			import mx.controls.Alert;
 			
 			
 			[Bindable]
@@ -14,7 +20,54 @@
 			
 			public function setReadResult(value:ReadResult):void{
 				readResult = value;
+				highlightAlignmentCheckBox_changeHandler(null);
 			}
+
+			protected function copyAlignmentButton_clickHandler(event:MouseEvent):void
+			{
+				System.setClipboard(qSeqRichText.text + "\n" + midlineRichText.text + "\n" + 
+									hSeqRichText.text);
+				Alert.show("Text copied ;)");
+			}
+
+
+			protected function highlightAlignmentCheckBox_changeHandler(event:Event):void
+			{
+				var midlineSt:String = readResult.midline;				
+					
+				var highlightFormat:TextLayoutFormat = new TextLayoutFormat();
+				highlightFormat.backgroundColor = 0xffee66;					
+				
+				var begin:int = 0; 
+				var end:int = 1;
+				var subMatchFound:Boolean = false;
+				
+				for(var i:int=0; i<midlineSt.length; i++){
+					
+					if(midlineSt.charAt(i) == '|'){
+						
+						if(subMatchFound){
+							end++;
+						}else{
+							begin = i;
+							end = i+1;
+							subMatchFound = true;
+						}
+					}else{
+						if(subMatchFound){								
+							hSeqRichText.setFormatOfRange(highlightFormat, begin, end);		
+							qSeqRichText.setFormatOfRange(highlightFormat, begin, end);		
+						}	
+						subMatchFound = false;
+					}		
+				}
+				if(subMatchFound){
+					hSeqRichText.setFormatOfRange(highlightFormat, begin, end);		
+					qSeqRichText.setFormatOfRange(highlightFormat, begin, end);	
+				}
+				
+			}
+
 		]]>
 	</fx:Script>	
 	<mx:HBox left="10" right="10" top="10">
@@ -55,17 +108,17 @@
 	</mx:HBox>
 	<mx:Canvas backgroundColor="#F2F2F2" 
 			   horizontalScrollPolicy="on" 
-			   bottom="10" 
+			   bottom="40" 
 			   left="10" 
 			   right="10" 
- top="109">
+ 				top="109">
 		<mx:HBox verticalAlign="middle" left="5" top="5">
 			<mx:Label text="Query seq:" width="50" fontWeight="bold"/>
 			<mx:HBox 
 				backgroundColor="#FFFFFF">
-				<mx:Label text="{readResult.querySequence}" 
-						  selectable="true" 
-						  id="qSeqLabel" 
+				<s:RichEditableText text="{readResult.querySequence}" 
+						  id="qSeqRichText" 
+						  editable="false"
 						  fontFamily="Courier New" />
 			</mx:HBox>			
 		</mx:HBox>
@@ -73,9 +126,9 @@
 			<mx:Label text="Midline:" width="50" fontWeight="bold"/>
 			<mx:HBox 
 				backgroundColor="#FFFFFF">
-				<mx:Label text="{readResult.midline}" 
-						  selectable="true" 
-						  id="midlineLabel" 
+				<s:RichEditableText text="{readResult.midline}" 
+						  id="midlineRichText" 
+						  editable="false"
 						  fontFamily="Courier New" />
 			</mx:HBox>	
 		</mx:HBox>
@@ -83,11 +136,20 @@
 			<mx:Label text="Hit sequence:" width="50" fontWeight="bold"/>
 			<mx:HBox 
 				backgroundColor="#FFFFFF">
-				<mx:Label text="{readResult.hitSequence}" 
-						  selectable="true" 
-						  id="h" 
-						  fontFamily="Courier New" />
+				<s:RichEditableText text="{readResult.hitSequence}" 
+						  id="hSeqRichText" 
+						  fontFamily="Courier New"
+						  editable="false"
+						  />
 			</mx:HBox>	
 		</mx:HBox>		
 	</mx:Canvas>
+	<s:CheckBox label="Highlight alignment" 
+				id="highlightAlignmentCheckBox" 
+				right="200" 
+				bottom="12"
+				change="highlightAlignmentCheckBox_changeHandler(event)" visible="false"/>
+	<s:Button label="Copy alignment to Clipboard" right="10" bottom="10" 
+			  id="copyAlignmentButton" 
+			  click="copyAlignmentButton_clickHandler(event)"/>
 </mx:Canvas>
