@@ -7,7 +7,10 @@
 	</fx:Declarations>
 	<fx:Script>
 		<![CDATA[
+			import com.era7.bioinfo.gui.events.ReadResultsEvent;
 			import com.era7.bioinfo.xml.mg7.ReadResult;
+			
+			import mx.events.ListEvent;
 			
 			[Bindable]
 			protected var xml:XML = null;
@@ -36,11 +39,20 @@
 			}
 			
 			
+
+			protected function dataGrid_itemClickHandler(event:ListEvent):void
+			{
+				var readResult:ReadResult = new ReadResult(XML(this.dataGrid.selectedItem));
+				dispatchEvent(new ReadResultsEvent(ReadResultsEvent.READ_RESULT_SELECTED,readResult,true));
+			}
+
 		]]>
 	</fx:Script>
 	<mx:DataGrid id="dataGrid"
 				 dataProvider="{xml.child(ReadResult.TAG_NAME)}"
-				  width="100%" height="100%">
+				  width="100%" 
+				  height="100%"
+				  itemClick="dataGrid_itemClickHandler(event)">
 		<mx:columns>
 			<mx:DataGridColumn id="readIdColumn" 
 							   dataField="{ReadResult.READ_ID_TAG_NAME}"
